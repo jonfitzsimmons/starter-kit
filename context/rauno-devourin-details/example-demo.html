@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resizable Panel - Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .resizable-panel {
+            position: relative;
+            background: white;
+            border-right: 1px solid #e5e5e5;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        }
+
+        .panel-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e5e5;
+            background: #fafafa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: transparent;
+            cursor: col-resize;
+            user-select: none;
+            -webkit-user-select: none;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .resize-handle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .resize-handle.active {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .snap-indicator {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 40px;
+            background: #0066cc;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .snap-indicator.visible {
+            opacity: 1;
+        }
+
+        .width-indicator {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 20;
+        }
+
+        .width-indicator.visible {
+            opacity: 1;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .demo-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .demo-info h2 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .demo-info p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .breakpoint-info {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .breakpoint-info h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .breakpoint-list {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .breakpoint {
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .breakpoint.active {
+            background: #0066cc;
+            color: white;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 8px;
+            color: #856404;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="resizable-panel" id="panel">
+        <div class="panel-header">Resizable Panel</div>
+        <div class="panel-content">
+            <div class="instructions">
+                <h3>Try it out!</h3>
+                <ul>
+                    <li>Hover over the right edge to see the resize handle</li>
+                    <li>Click and drag to resize the panel</li>
+                    <li>Watch for snap indicators when near breakpoints</li>
+                    <li>Notice the width indicator while dragging</li>
+                    <li>Panel will snap to: 200px, 300px, 450px, or 600px</li>
+                </ul>
+            </div>
+            <div class="demo-info">
+                <h2>Principles Demonstrated</h2>
+                <p><strong>✅ Contained Gestures:</strong> Pointer events disabled during drag, no text selection</p>
+                <p><strong>✅ Simulating Physics:</strong> Spring animation on snap (no bounce for mechanical interaction)</p>
+                <p><strong>✅ Motion Choreography:</strong> Staged interaction with damping and snap preview</p>
+                <p><strong>✅ Ergonomic Interactions:</strong> Visual affordance, clear feedback</p>
+                <p><strong>✅ Responsive Interfaces:</strong> Instant feedback, continuous updates</p>
+                <p><strong>✅ Inferring Intent:</strong> Velocity-based early snapping</p>
+                <div class="breakpoint-info">
+                    <h3>Breakpoints:</h3>
+                    <div class="breakpoint-list">
+                        <span class="breakpoint" id="bp-200">200px</span>
+                        <span class="breakpoint" id="bp-300">300px</span>
+                        <span class="breakpoint" id="bp-450">450px</span>
+                        <span class="breakpoint" id="bp-600">600px</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle" id="handle">
+            <div class="snap-indicator" id="snapIndicator"></div>
+        </div>
+        <div class="width-indicator" id="widthIndicator">300px</div>
+    </div>
+
+    <div class="main-content">
+        <div class="demo-info">
+            <h2>Interactive Demo</h2>
+            <p>This is a working implementation of the Resizable Panel prototype.</p>
+            <p>All the principles from Devouring Details are applied here:</p>
+            <ul style="margin-left: 20px; margin-top: 12px;">
+                <li>Drag threshold (5px) prevents accidental triggers</li>
+                <li>Damping (70%) creates weight sensation</li>
+                <li>Snap preview appears within 50px of breakpoints</li>
+                <li>Velocity-based early snapping when moving fast</li>
+                <li>Spring animation on snap (stiffness: 300, damping: 30)</li>
+                <li>No bounce (mechanical interaction, not thrown)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const BREAKPOINTS = [200, 300, 450, 600];
+        const DRAG_THRESHOLD = 5;
+        const SNAP_PREVIEW_DISTANCE = 50;
+        const VELOCITY_SNAP_DISTANCE = 80;
+        const VELOCITY_THRESHOLD = 2;
+
+        const panel = document.getElementById('panel');
+        const handle = document.getElementById('handle');
+        const snapIndicator = document.getElementById('snapIndicator');
+        const widthIndicator = document.getElementById('widthIndicator');
+        const breakpointElements = BREAKPOINTS.map(bp => document.getElementById(`bp-${bp}`));
+
+        let isResizing = false;
+        let currentWidth = 300;
+        let startX = 0;
+        let startWidth = 0;
+        let hasMoved = false;
+        let velocity = 0;
+        let lastX = 0;
+        let lastTime = Date.now();
+        let animationFrame = null;
+
+        // Spring animation helper
+        function springAnimation(start, target, onUpdate, onComplete) {
+            const stiffness = 300;
+            const damping = 30;
+            let position = start;
+            let velocity = 0;
+            const targetValue = target;
+
+            function animate() {
+                const force = (targetValue - position) * (stiffness / 1000);
+                velocity += force;
+                velocity *= (1 - damping / 100);
+                position += velocity;
+
+                if (Math.abs(targetValue - position) < 0.5 && Math.abs(velocity) < 0.1) {
+                    position = targetValue;
+                    onUpdate(position);
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                onUpdate(position);
+                animationFrame = requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        function findNearestBreakpoint(width) {
+            return BREAKPOINTS.reduce((prev, curr) => 
+                Math.abs(curr - width) < Math.abs(prev - width) ? curr : prev
+            );
+        }
+
+        function updateBreakpointIndicators(width) {
+            const nearest = findNearestBreakpoint(width);
+            breakpointElements.forEach((el, i) => {
+                if (BREAKPOINTS[i] === nearest) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        function snapToBreakpoint(width) {
+            const target = findNearestBreakpoint(width);
+            handle.classList.remove('active');
+            snapIndicator.classList.remove('visible');
+            widthIndicator.classList.remove('visible');
+
+            springAnimation(currentWidth, target, (value) => {
+                currentWidth = value;
+                panel.style.width = value + 'px';
+                updateBreakpointIndicators(value);
+            }, () => {
+                currentWidth = target;
+                panel.style.width = target + 'px';
+                updateBreakpointIndicators(target);
+            });
+        }
+
+        function handlePointerDown(e) {
+            // Contained gesture setup
+            document.body.style.pointerEvents = 'none';
+            handle.style.pointerEvents = 'auto';
+            handle.style.cursor = 'col-resize';
+            handle.setPointerCapture(e.pointerId);
+
+            isResizing = true;
+            hasMoved = false;
+            startX = e.clientX;
+            startWidth = currentWidth;
+            lastX = startX;
+            lastTime = Date.now();
+            velocity = 0;
+
+            handle.classList.add('active');
+            widthIndicator.classList.add('visible');
+
+            function handlePointerMove(e) {
+                const deltaX = e.clientX - startX;
+
+                // Drag threshold
+                if (Math.abs(deltaX) < DRAG_THRESHOLD && !hasMoved) return;
+                hasMoved = true;
+
+                // Calculate velocity
+                const now = Date.now();
+                const deltaTime = now - lastTime;
+                if (deltaTime > 0) {
+                    velocity = (e.clientX - lastX) / deltaTime;
+                }
+                lastX = e.clientX;
+                lastTime = now;
+
+                // Damping for weight sensation
+                const damping = 0.7;
+                const newWidth = Math.max(150, Math.min(700, startWidth + (deltaX * damping)));
+                currentWidth = newWidth;
+                panel.style.width = newWidth + 'px';
+
+                // Update width indicator
+                widthIndicator.textContent = Math.round(newWidth) + 'px';
+
+                // Snap preview
+                const nearest = findNearestBreakpoint(newWidth);
+                const distance = Math.abs(newWidth - nearest);
+
+                if (distance < SNAP_PREVIEW_DISTANCE) {
+                    snapIndicator.classList.add('visible');
+                    updateBreakpointIndicators(newWidth);
+                } else {
+                    snapIndicator.classList.remove('visible');
+                    updateBreakpointIndicators(newWidth);
+                }
+
+                // Velocity-based early snap
+                const direction = nearest > newWidth ? 1 : -1;
+                if (Math.abs(velocity) > VELOCITY_THRESHOLD && 
+                    Math.sign(velocity) === direction && 
+                    distance < VELOCITY_SNAP_DISTANCE) {
+                    snapToBreakpoint(newWidth);
+                    document.removeEventListener('pointermove', handlePointerMove);
+                    document.removeEventListener('pointerup', handlePointerUp);
+                    return;
+                }
+            }
+
+            function handlePointerUp(e) {
+                document.body.style.pointerEvents = 'auto';
+                handle.style.cursor = 'col-resize';
+                handle.releasePointerCapture(e.pointerId);
+
+                isResizing = false;
+                handle.classList.remove('active');
+
+                if (hasMoved) {
+                    snapToBreakpoint(currentWidth);
+                } else {
+                    widthIndicator.classList.remove('visible');
+                    snapIndicator.classList.remove('visible');
+                }
+
+                document.removeEventListener('pointermove', handlePointerMove);
+                document.removeEventListener('pointerup', handlePointerUp);
+            }
+
+            document.addEventListener('pointermove', handlePointerMove);
+            document.addEventListener('pointerup', handlePointerUp);
+        }
+
+        handle.addEventListener('pointerdown', handlePointerDown);
+        handle.style.touchAction = 'none';
+
+        // Initialize
+        panel.style.width = currentWidth + 'px';
+        updateBreakpointIndicators(currentWidth);
+    </script>
+</body>
+</html>
+
+

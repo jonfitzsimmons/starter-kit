@@ -1,16 +1,22 @@
+"use client";
+
 import { Box, Flex, VStack, Heading, Text } from "@/components/design-system";
 import { Button } from "@chakra-ui/react";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  // Get creation timestamp
-  const createdAt = new Date().toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const [createdAt, setCreatedAt] = useState("");
+
+  useEffect(() => {
+    setCreatedAt(new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }));
+  }, []);
 
   return (
     <Box
